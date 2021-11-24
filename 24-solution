@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# ==================================
+# Notes:
+# 1. Get floating division done
+# 2. Polish the output so the program exits with the first solution found, or returns that there are no solutions
+
+# Global Variables
+REPONSE=""
+
+# Hard code 4 random numbers for testing
+# TODO: Change into file input after
+# First Test: 8 3 7 6
+C1=$1
+C2=$2
+C3=$3
+C4=$4
+List=($C1 $C2 $C3 $C4)
+Solvable=0
+
+# Solve
+# =====================
+# Premier loop of 4 iterations to rotate between each starting card
+for (( i=0; i<4; i=i+1 )); do
+	Temp_List=(${List[0]} ${List[1]} ${List[2]} ${List[3]})
+	#echo "${Temp_List[0]} ${Temp_List[1]} ${Temp_List[2]} ${Temp_List[3]}"
+
+	# Create another copy of Temp_List before calculation loop
+	Calc_List=(${Temp_List[@]})
+
+	# Secondary loop of 4 iteration to test all orders
+	# (There are 4 possible orders for each starting number)
+	for (( j=0; j<4; j=j+1 )); do
+		# TODO: Remove after testing
+		echo "${Calc_List[@]}"
+
+		# Calculations: 64 combinations of binary operations
+		# 0: + | 1: - | 2: x | 3: /
+		Quaternary=(0 0 0)
+		ONE=0
+		TWO=0
+		ANS=0
+		for (( l=0; l<64; l++ )); do
+			case ${Quaternary[0]} in
+				0)		ONE=$(( ${Calc_List[0]} + ${Calc_List[1]}));;
+				1)		ONE=$(( ${Calc_List[0]} - ${Calc_List[1]}));;
+				2)		ONE=$(( ${Calc_List[0]} * ${Calc_List[1]}));;
+				3)		ONE=$(( ${Calc_List[0]} / ${Calc_List[1]}));;
+				# TODO: Need to work on floating point division (Bash)
+			esac
+
+			case ${Quaternary[1]} in
+				0)		TWO=$(( $ONE + ${Calc_List[2]} ));;
+				1)		TWO=$(( $ONE - ${Calc_List[2]} ));;
+				2)		TWO=$(( $ONE * ${Calc_List[2]} ));;
+				3)		TWO=$(( $ONE / ${Calc_List[2]} ));;
+				# TODO: Floating point division
+			esac
+
+			case ${Quaternary[2]} in
+				0)		ANS=$(( $TWO + ${Calc_List[3]} ));;
+				1)		ANS=$(( $TWO - ${Calc_List[3]} ));;
+				2)		ANS=$(( $TWO * ${Calc_List[3]} ));;
+				3)		ANS=$(( $TWO / ${Calc_List[3]} ));;
+				# TODO: Floating point division
+			esac
+
+			if [[ $ANS == 24 ]]; then
+				echo "Solution found!"
+				echo "Quaternary:" "${Quaternary[@]}"
+				echo "Order:" "${Calc_List[@]}"
+				break
+			fi
+
+			# Incrementing the quaternary counter
+			Quaternary[0]=$(( Quaternary[0] + 1 ))
+			if [[ ${Quaternary[0]} == 4 ]]; then
+				Quaternary[0]=0
+				Quaternary[1]=$(( Quaternary[1] + 1 ))
+			fi
+			if [[ ${Quaternary[1]} == 4 ]]; then
+				Quaternary[1]=0
+				Quaternary[2]=$(( Quaternary[2] + 1 ))
+			fi
+		done
+
+		# Handle reordering after calculations in each iteration
+		if [[ $j<2 ]]; then
+			Hold=${Calc_List[1]}
+			Calc_List[1]=${Calc_List[2]}
+			Calc_List[2]=${Calc_List[3]}
+			Calc_List[3]=$Hold
+		fi
+		if [[ $j == 2 ]]; then
+			Hold=${Calc_List[2]}
+			Calc_List[2]=${Calc_List[3]}
+			Calc_List[3]=$Hold
+		fi
+	done
+
+	# At the end shift numbers in Temp_List one to the left
+	Temp_Swap=${Temp_List[0]}
+
+	for (( k=0; k<4; k=k+1 )); do
+		if [[ $k == 3 ]]; then
+			Temp_List[3]=$Temp_Swap
+			break
+		fi
+
+		Temp_List[$k]=${Temp_List[$(( k + 1 ))]}
+	done
+
+	# Replacing the original list with the shifted list
+	List=(${Temp_List[@]})
+done
+
+# End message
+echo "Done"
